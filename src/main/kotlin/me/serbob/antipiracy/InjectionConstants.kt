@@ -1,18 +1,25 @@
 package me.serbob.antipiracy
 
+import me.serbob.antipiracy.util.RandomUtil
+
 object InjectionConstants {
 
-    val DEFAULT_FIELDS = listOf(
-        "ᚠᚱᛖᛃᚨ" to "%%__BUILTBYBIT__%%",
-        "ᚨᚱᛖᛋ" to "%%__USER__%%",
-        "ᚦᛟᚱ" to "%%__USERNAME__%%",
-        "ᛋᛏᛖᚨᛗ" to "%%__STEAM64__%%",
-        "ᚹᚨᛚᚺᚨᛚᛚᚨ" to "%%__STEAM32__%%",
-        "ᚱᚨᚷᚾᚨᚱᛟᚲ" to "%%__RESOURCE__%%",
-        "ᛗᛁᛞᚷᚨᚱᛞ" to "%%__RESOURCE_TITLE__%%",
-        "ᚺᛖᛚᚺᛖᛁᛗ" to "%%__VERSION__%%",
-        "ᚢᚱᛞ" to "%%__VERSION_NUMBER__%%",
-        "ᛃᛟᚱᛗᚢᚾᚷᚨᚾᛞᚱ" to "%%__TIMESTAMP__%%",
-        "ᛁᚲᚾᛟᚹᚹᚺᛟᚤᛟᚢᚨᚱᛖ" to "%%__NONCE__%%",
+    private val BUILTBYBIT_FIELDS = listOf(
+        "%%__BUILTBYBIT__%%",
+        "%%__USER__%%",
+        "%%__USERNAME__%%",
+        "%%__STEAM64__%%",
+        "%%__STEAM32__%%",
+        "%%__RESOURCE__%%",
+        "%%__RESOURCE_TITLE__%%",
+        "%%__VERSION__%%",
+        "%%__VERSION_NUMBER__%%",
+        "%%__TIMESTAMP__%%",
+        "%%__NONCE__%%",
     )
+
+    fun noncePlaceholder(): String = "%%__NONCE__%%"
+
+    fun generateRandomFields(): List<Pair<String, String>> = BUILTBYBIT_FIELDS
+        .map { RandomUtil.randomValidJavaString() to it }
 }

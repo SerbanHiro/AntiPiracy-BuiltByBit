@@ -18,6 +18,7 @@ class InjectionPlugin : Plugin<Project> {
             task.jarFile.set(extension.jarFile)
             task.fields.set(extension.fields)
             task.includeDefaults.set(extension.includeDefaults)
+            task.hiddenNonce.set(extension.hiddenNonce)
         }
     }
 }

@@ -13,10 +13,12 @@ abstract class InjectionExtension(
     abstract val jarFile: RegularFileProperty
     abstract val fields: ListProperty<Pair<String, String>>
     abstract val includeDefaults: Property<Boolean>
+    abstract val hiddenNonce: Property<Boolean>
 
     init {
         fields.convention(listOf())
         includeDefaults.convention(true)
+        hiddenNonce.convention(true)
         jarFile.convention(
             project.layout.buildDirectory.file("libs/${project.name}-${project.version}.jar")
         )
@@ -49,5 +51,9 @@ abstract class InjectionExtension(
         value: String
     ) {
         fields.add(name to value)
+    }
+
+    fun disableHiddenNonce() {
+        hiddenNonce.set(false)
     }
 }
