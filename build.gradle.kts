@@ -13,6 +13,8 @@ dependencies {
 }
 
 gradlePlugin {
+    website.set("https://github.com/SerbanHiro/AntiPiracy-BuiltByBit")
+    vcsUrl.set("https://github.com/SerbanHiro/AntiPiracy-BuiltByBit")
 
     plugins {
         create("antipiracy") {
