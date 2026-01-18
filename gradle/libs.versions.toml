@@ -1,0 +1,7 @@
+[versions]
+asm = "9.7"
+
+[libraries]
+asm = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }
+
+[plugins]
