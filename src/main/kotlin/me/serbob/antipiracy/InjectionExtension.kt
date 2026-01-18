@@ -34,6 +34,12 @@ abstract class InjectionExtension(
         jarFile.set(file)
     }
 
+    fun targetBuildLibs(
+        path: String
+    ) {
+        jarFile.set(project.file("build/libs/$path"))
+    }
+
     fun noDefaultFields() {
         includeDefaults.set(false)
     }

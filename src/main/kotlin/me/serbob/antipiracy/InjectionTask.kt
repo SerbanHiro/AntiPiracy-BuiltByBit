@@ -55,7 +55,7 @@ abstract class InjectionTask : DefaultTask() {
         }
 
         Files.move(tempJar.toPath(), jar.toPath(), StandardCopyOption.REPLACE_EXISTING)
-        logger.lifecycle("Injected license fields into all classes")
+        logger.lifecycle("Injected license fields into all classes for ${jar.name}")
     }
 
     private fun injectFields(
