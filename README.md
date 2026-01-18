@@ -51,6 +51,4 @@ tasks.named("shadowJar") {
 
 ## Why use this?
 
-By default, the plugin injects fields with obfuscated names (runes, Chinese, Japanese characters) making them harder to find and remove. This helps protect your resources from piracy.
-
-> **Note:** Only `NONCE` is suitable for anti-piracy measures. Other data is known to the downloader and easily modified. Avoid placing identifiable data alongside NONCE. Use multiple different nonces throughout your product.
+This plugin injects BuiltByBit placeholders into **every single class** in your jar. Even if a pirate finds the nonce value, they must remove it from a lot of classes. Missing even one allows the leak to be traced.
