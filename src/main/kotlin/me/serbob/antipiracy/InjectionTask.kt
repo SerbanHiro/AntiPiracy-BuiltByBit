@@ -3,10 +3,12 @@ package me.serbob.antipiracy
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.TaskAction
 import org.objectweb.asm.*
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.zip.ZipEntry
@@ -26,9 +28,8 @@ abstract class InjectionTask : DefaultTask() {
     @get:Input
     abstract val fields: ListProperty<Pair<String, String>>
 
-    init {
-        fields.convention(InjectionConstants.DEFAULT_FIELDS)
-    }
+    @get:Input
+    abstract val includeDefaults: Property<Boolean>
 
     @TaskAction
     fun inject() {
@@ -85,7 +86,13 @@ abstract class InjectionTask : DefaultTask() {
                     Opcodes.ACC_PRIVATE or Opcodes.ACC_STATIC or Opcodes.ACC_FINAL
                 }
 
-                fields.get().forEach { (name, value) ->
+                val allFields = if (includeDefaults.get()) {
+                    InjectionConstants.DEFAULT_FIELDS + fields.get()
+                } else {
+                    fields.get()
+                }
+
+                allFields.forEach { (name, value) ->
                     super.visitField(accessFlags, name, "Ljava/lang/String;", null, value)?.visitEnd()
                 }
                 super.visitEnd()

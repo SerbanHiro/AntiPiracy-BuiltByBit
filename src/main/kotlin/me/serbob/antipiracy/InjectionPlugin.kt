@@ -8,6 +8,16 @@ class InjectionPlugin : Plugin<Project> {
     override fun apply(
         project: Project
     ) {
-        project.tasks.register("injectLicenseFields", InjectionTask::class.java)
+        val extension = project.extensions.create(
+            "antipiracy",
+            InjectionExtension::class.java,
+            project
+        )
+
+        project.tasks.register("injectLicenseFields", InjectionTask::class.java) { task ->
+            task.jarFile.set(extension.jarFile)
+            task.fields.set(extension.fields)
+            task.includeDefaults.set(extension.includeDefaults)
+        }
     }
 }
