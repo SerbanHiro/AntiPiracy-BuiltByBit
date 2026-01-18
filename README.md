@@ -5,7 +5,7 @@ A Gradle plugin that injects [BuiltByBit's anti-piracy placeholders](https://bui
 ## Installation
 ```kotlin
 plugins {
-    id("me.serbob.antipiracy") version "(version)"
+    id("me.serbob.antipiracy") version "(latest version)"
 }
 ```
 
@@ -13,7 +13,7 @@ plugins {
 
 ### Basic
 ```kotlin
-tasks.antipiracy { }
+antipiracy { }
 ```
 
 This injects default fields into `build/libs/${project.name}-${project.version}.jar`.
@@ -38,7 +38,6 @@ antipiracy {
 ```kotlin
 antipiracy {
     noDefaultFields()
-    nonce("MY_CUSTOM_NONCE")
 }
 ```
 
