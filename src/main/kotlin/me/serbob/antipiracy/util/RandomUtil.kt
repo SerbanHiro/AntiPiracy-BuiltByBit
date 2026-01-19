@@ -2,15 +2,19 @@ package me.serbob.antipiracy.util
 
 object RandomUtil {
 
+    private val numbers = '0'..'9'
+    private val lowerLetters = 'a'..'z'
+    private val upperLetters = 'A'..'Z'
+
     fun randomLength(): Int = (5..20).random()
     fun randomNumber(): Int = (1..10).random()
 
-    fun randomLetter(): Char = (('A'..'Z') + ('a'..'z')).random()
-    fun randomUpperLetter(): Char = ('A'..'Z').random()
-    fun randomLowerLetter(): Char = ('a'..'z').random()
+    fun randomLetter(): Char = ((upperLetters) + (lowerLetters)).random()
+    fun randomUpperLetter(): Char = (upperLetters).random()
+    fun randomLowerLetter(): Char = (lowerLetters).random()
 
-    fun randomChar(): Char = (('A'..'Z') + ('a'..'z') + ('0'..'9')).random()
-    fun randomHexChar(): Char = (('0'..'9') + ('a'..'f')).random()
+    fun randomChar(): Char = ((upperLetters) + (lowerLetters) + (numbers)).random()
+    fun randomHexChar(): Char = ((numbers) + (lowerLetters)).random()
 
     fun randomValidJavaString(): String = randomValidJavaString(randomLength())
 
