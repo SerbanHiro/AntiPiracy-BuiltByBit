@@ -1,6 +1,6 @@
 package me.serbob.antipiracy
 
-import me.serbob.antipiracy.util.RandomUtil
+import me.serbob.antipiracy.model.Field
 
 object InjectionConstants {
 
@@ -15,11 +15,11 @@ object InjectionConstants {
         "%%__VERSION__%%",
         "%%__VERSION_NUMBER__%%",
         "%%__TIMESTAMP__%%",
-        "%%__NONCE__%%",
     )
 
-    fun noncePlaceholder(): String = "%%__NONCE__%%"
+    fun generateFieldTemplates(): List<Field> = BUILTBYBIT_FIELDS
+        .map { Field("", it, false) }
 
-    fun generateRandomFields(): List<Pair<String, String>> = BUILTBYBIT_FIELDS
-        .map { RandomUtil.randomValidJavaString() to it }
+    fun generateDefaultNonceTemplate(): Field =
+        Field("", "%%__NONCE__%%", true)
 }

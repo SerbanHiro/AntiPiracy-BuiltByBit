@@ -1,5 +1,6 @@
 package me.serbob.antipiracy
 
+import me.serbob.antipiracy.model.Field
 import me.serbob.antipiracy.util.RandomUtil
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
@@ -26,7 +27,7 @@ abstract class InjectionTask : DefaultTask() {
     abstract val jarFile: RegularFileProperty
 
     @get:Input
-    abstract val fields: ListProperty<Pair<String, String>>
+    abstract val fields: ListProperty<Field>
 
     @get:Input
     abstract val includeDefaults: Property<Boolean>
@@ -34,13 +35,12 @@ abstract class InjectionTask : DefaultTask() {
     @get:Input
     abstract val hiddenNonce: Property<Boolean>
 
-    @get:Input
-    var realNonceClass: String = "nothing was chosen, report this on the github issues page"
-
     @TaskAction
     fun inject() {
         val jar = jarFile.get().asFile
         val tempJar = jar.resolveSibling("${jar.nameWithoutExtension}-temp.jar")
+
+        val fieldTemplates = buildFieldTemplates()
 
         ZipFile(jar).use { zip ->
             ZipOutputStream(tempJar.outputStream()).use { zos ->
@@ -49,15 +49,26 @@ abstract class InjectionTask : DefaultTask() {
                 val classEntries = entries.filter {
                     it.name.endsWith(".class") && "module-info" !in it.name
                 }
-                val realNonceEntry = classEntries.randomOrNull()
-                realNonceClass = realNonceEntry?.name?.removeSuffix(".class") ?: ""
+
+                val nonceTemplates = fieldTemplates.filter { it.nonce }
+                val shuffledClasses = classEntries.shuffled()
+
+                val nonceClassMappings: Map<Field, String> = nonceTemplates
+                    .mapIndexed { index, field ->
+                        val className = shuffledClasses.getOrNull(index)
+                            ?.name
+                            ?.removeSuffix(".class")
+                            ?: ""
+
+                        field to className
+                    }.toMap()
 
                 entries.forEach { entry ->
                     val content = zip.getInputStream(entry).readBytes()
-                    val isRealNonceClass = entry.name.removeSuffix(".class") == realNonceClass
+                    val className = entry.name.removeSuffix(".class")
 
                     val output = if (entry.name.endsWith(".class") && "module-info" !in entry.name) {
-                        injectFields(content, isRealNonceClass)
+                        injectFields(content, className, nonceClassMappings, fieldTemplates)
                     } else {
                         content
                     }
@@ -66,21 +77,30 @@ abstract class InjectionTask : DefaultTask() {
                     zos.write(output)
                     zos.closeEntry()
                 }
+
+                if (hiddenNonce.get()) {
+                    saveNonceMapping(jar.nameWithoutExtension, nonceClassMappings)
+                }
             }
         }
 
         Files.move(tempJar.toPath(), jar.toPath(), StandardCopyOption.REPLACE_EXISTING)
         logger.lifecycle("Injected license fields into all classes for ${jar.name}")
+    }
 
-        if (!hiddenNonce.get())
-            return
+    private fun buildFieldTemplates(): List<Field> {
+        val defaults = if (includeDefaults.get()) {
+            InjectionConstants.generateFieldTemplates() + InjectionConstants.generateDefaultNonceTemplate()
+        } else {
+            emptyList()
+        }
 
-        saveNonceMapping(jar.nameWithoutExtension, realNonceClass)
+        return defaults + fields.get()
     }
 
     private fun saveNonceMapping(
         version: String,
-        nonceClass: String
+        nonceClassMappings: Map<Field, String>
     ) {
         val nonceFile = project.rootDir.resolve("nonce-mappings.properties")
 
@@ -89,25 +109,28 @@ abstract class InjectionTask : DefaultTask() {
             nonceFile.inputStream().use { properties.load(it) }
         }
 
-        properties[version] = nonceClass
+        nonceClassMappings.forEach { (field, className) ->
+            properties["$version.${field.value}"] = className
+        }
 
         nonceFile.outputStream().use {
             properties.store(it, "Real nonce class mappings - DO NOT SHARE")
         }
 
-        logger.lifecycle("Saved nonce mapping: $version -> $nonceClass")
+        logger.lifecycle("Saved ${nonceClassMappings.size} nonce mapping(s) for $version")
     }
 
     private fun injectFields(
         classBytes: ByteArray,
-        isRealNonceClass: Boolean
+        className: String,
+        nonceClassMappings: Map<Field, String>,
+        fieldTemplates: List<Field>
     ): ByteArray {
         val reader = ClassReader(classBytes)
         val writer = ClassWriter(reader, 0)
 
         val visitor = object : ClassVisitor(Opcodes.ASM9, writer) {
             private var isInterface = false
-            private var className: String? = null
 
             override fun visit(
                 version: Int,
@@ -128,25 +151,30 @@ abstract class InjectionTask : DefaultTask() {
                     Opcodes.ACC_PRIVATE or Opcodes.ACC_STATIC or Opcodes.ACC_FINAL
                 }
 
-                val allFields = if (includeDefaults.get()) {
-                    InjectionConstants.generateRandomFields() + fields.get()
-                } else {
-                    fields.get()
-                }
+                val nonNonceTemplates = fieldTemplates.filter { !it.nonce }
 
-                allFields.forEach { (name, value) ->
-                    val shouldHideNonce = hiddenNonce.get()
-                            && value == InjectionConstants.noncePlaceholder()
-                            && !isRealNonceClass
-
-                    val fieldValue = if (shouldHideNonce) {
-                        RandomUtil.randomFakeNonce()
-                    } else {
-                        value
+                nonNonceTemplates.forEach { template ->
+                    val fieldName = template.name.ifEmpty {
+                        RandomUtil.randomValidJavaString()
                     }
 
-                    super.visitField(accessFlags, name, "Ljava/lang/String;", null, fieldValue)?.visitEnd()
+                    super.visitField(accessFlags, fieldName, "Ljava/lang/String;", null, template.value)
+                        ?.visitEnd()
                 }
+
+                val assignedNonceEntry = nonceClassMappings.entries.find { it.value == className }
+
+                val fieldName = if (assignedNonceEntry != null && assignedNonceEntry.key.name.isNotEmpty()) {
+                    assignedNonceEntry.key.name
+                } else {
+                    RandomUtil.randomValidJavaString()
+                }
+
+                val fieldValue = assignedNonceEntry?.key?.value ?: RandomUtil.randomFakeNonce()
+
+                super.visitField(accessFlags, fieldName, "Ljava/lang/String;", null, fieldValue)
+                    ?.visitEnd()
+
                 super.visitEnd()
             }
         }

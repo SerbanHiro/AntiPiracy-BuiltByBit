@@ -1,5 +1,6 @@
 package me.serbob.antipiracy
 
+import me.serbob.antipiracy.model.Field
 import org.gradle.api.Project
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
@@ -11,7 +12,7 @@ abstract class InjectionExtension(
 ) {
 
     abstract val jarFile: RegularFileProperty
-    abstract val fields: ListProperty<Pair<String, String>>
+    abstract val fields: ListProperty<Field>
     abstract val includeDefaults: Property<Boolean>
     abstract val hiddenNonce: Property<Boolean>
 
@@ -50,7 +51,26 @@ abstract class InjectionExtension(
         name: String,
         value: String
     ) {
-        fields.add(name to value)
+        fields.add(Field(name, value))
+    }
+
+    fun addRandomField(
+        value: String
+    ) {
+        fields.add(Field("", value))
+    }
+
+    fun addNonceField(
+        name: String,
+        value: String
+    ) {
+        fields.add(Field(name, value, true))
+    }
+
+    fun addRandomNonceField(
+        value: String
+    ) {
+        fields.add(Field("", value, true))
     }
 
     fun disableHiddenNonce() {
